@@ -125,6 +125,11 @@ The request must include:
 Authorization: Bearer <TITAN_AGENT_TOKEN>
 ```
 
+If Titan machines cannot reach Vercel directly, run
+`scripts/aws_report_proxy.py` on `aws_verifier` and point the agent at the AWS
+proxy URL instead. In that mode, Titans use `REPORT_PROXY_TOKEN`, while AWS
+injects the real Vercel `TITAN_AGENT_TOKEN`.
+
 ## Verification
 
 ```bash
