@@ -38,11 +38,11 @@ function machine(lastSeenAt: string): MachineSnapshot {
 }
 
 describe("dashboard status", () => {
-  it("marks machines stale after three minutes", () => {
-    const now = new Date("2026-06-21T10:05:00.000Z");
+  it("marks machines stale after ten minutes", () => {
+    const now = new Date("2026-06-21T10:15:00.000Z");
 
-    expect(machineStatus("2026-06-21T10:03:00.000Z", now)).toBe("online");
-    expect(machineStatus("2026-06-21T10:01:30.000Z", now)).toBe("stale");
+    expect(machineStatus("2026-06-21T10:06:00.000Z", now)).toBe("online");
+    expect(machineStatus("2026-06-21T10:04:30.000Z", now)).toBe("stale");
   });
 
   it("summarizes online GPUs only", () => {
@@ -51,7 +51,7 @@ describe("dashboard status", () => {
       [
         machine("2026-06-21T10:04:00.000Z"),
         {
-          ...machine("2026-06-21T09:59:00.000Z"),
+          ...machine("2026-06-21T09:54:00.000Z"),
           machine_name: "titan094",
         },
       ],

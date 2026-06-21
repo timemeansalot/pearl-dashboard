@@ -144,7 +144,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--worker", required=True)
     parser.add_argument("--dashboard-url", required=True)
     parser.add_argument("--token", default=os.environ.get("TITAN_AGENT_TOKEN"))
-    parser.add_argument("--interval", type=int, default=60)
+    parser.add_argument("--interval", type=int, default=300)
     parser.add_argument("--once", action="store_true")
     return parser.parse_args()
 

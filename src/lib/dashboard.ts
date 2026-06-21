@@ -4,7 +4,7 @@ import type {
   PearlAccountSnapshot,
 } from "./types";
 
-const STALE_MS = 3 * 60 * 1000;
+const STALE_MS = 10 * 60 * 1000;
 
 export function machineStatus(
   lastSeenAt: string,

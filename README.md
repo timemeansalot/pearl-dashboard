@@ -35,7 +35,7 @@ AWS_PROXY_TOKEN
 
 Vercel Hobby accounts only allow daily Cron Jobs, so `vercel.json` refreshes
 Pearl Fortune account data once per day. Titan machine GPU data is pushed by
-the Titan reporter every 60 seconds and does not depend on Vercel Cron.
+the Titan reporter every 5 minutes and does not depend on Vercel Cron.
 
 If Pearl Fortune returns 403 from Vercel or your local network, run
 `scripts/aws_pearl_proxy.py` on `aws_verifier` or another overseas host:
@@ -89,6 +89,9 @@ python3 pearl_dashboard_agent.py \
 For long-running use, run it under `tmux`, `nohup`, or a user-level systemd
 unit. The script only reads `nvidia-smi` and Docker status; it does not start or
 stop miners.
+
+Machines are marked stale by the dashboard if no report is received for 10
+minutes.
 
 ## API
 
