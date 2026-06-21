@@ -1,36 +1,127 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pearl Mining Dashboard
 
-## Getting Started
+Next.js dashboard for Pearl mining machines. Titan hosts push GPU and Pearl
+container status to `/api/agent/report`; Vercel Cron refreshes Pearl Fortune
+account data through `/api/cron/pearl`.
 
-First, run the development server:
+## Local development
 
 ```bash
+npm install
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Without `DATABASE_URL`, the app uses an in-memory store. This is useful for
+local UI testing but not persistent.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Vercel environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Required:
 
-## Learn More
+```text
+DATABASE_URL
+TITAN_AGENT_TOKEN
+PEARL_ADDRESS
+ALLOWED_MACHINES
+```
 
-To learn more about Next.js, take a look at the following resources:
+Recommended:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```text
+CRON_SECRET
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Optional if Vercel cannot reach Pearl Fortune directly:
 
-## Deploy on Vercel
+```text
+AWS_PROXY_URL
+AWS_PROXY_TOKEN
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+If Pearl Fortune returns 403 from Vercel or your local network, run
+`scripts/aws_pearl_proxy.py` on `aws_verifier` or another overseas host:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+export AWS_PROXY_TOKEN='replace-with-proxy-token'
+nohup python3 scripts/aws_pearl_proxy.py --port 18080 \
+  >/tmp/aws_pearl_proxy.log 2>&1 &
+```
+
+Then expose it through your preferred HTTPS reverse proxy and set:
+
+```text
+AWS_PROXY_URL=https://your-aws-host.example.com/fetch
+AWS_PROXY_TOKEN=replace-with-proxy-token
+```
+
+## Titan reporter
+
+Copy `scripts/pearl_dashboard_agent.py` to each Titan host and run:
+
+```bash
+python3 pearl_dashboard_agent.py \
+  --machine titan094 \
+  --worker titan094-2x4090 \
+  --dashboard-url https://your-app.vercel.app \
+  --token "$TITAN_AGENT_TOKEN"
+```
+
+Single test report:
+
+```bash
+python3 pearl_dashboard_agent.py \
+  --machine titan094 \
+  --worker titan094-2x4090 \
+  --dashboard-url https://your-app.vercel.app \
+  --token "$TITAN_AGENT_TOKEN" \
+  --once
+```
+
+For long-running use, run it under `tmux`, `nohup`, or a user-level systemd
+unit. The script only reads `nvidia-smi` and Docker status; it does not start or
+stop miners.
+
+## API
+
+`POST /api/agent/report`
+
+```json
+{
+  "machine": "titan094",
+  "worker": "titan094-2x4090",
+  "timestamp": "2026-06-21T10:30:00+08:00",
+  "pearl": {
+    "miner_container_running": true,
+    "tunnel_container_running": true,
+    "image": "10.234.1.250:5001/pearl-miner:v1.1.6",
+    "gpu_mode": "all"
+  },
+  "gpus": [
+    {
+      "index": 0,
+      "name": "NVIDIA GeForce RTX 4090",
+      "temperature_c": 66,
+      "utilization_pct": 99,
+      "power_w": 312,
+      "memory_used_mib": 11220,
+      "memory_total_mib": 24564
+    }
+  ]
+}
+```
+
+The request must include:
+
+```text
+Authorization: Bearer <TITAN_AGENT_TOKEN>
+```
+
+## Verification
+
+```bash
+npm run lint
+npm run test
+python3 -m unittest scripts/test_pearl_dashboard_agent.py
+npm run build
+```
