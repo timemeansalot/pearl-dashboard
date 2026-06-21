@@ -7,9 +7,11 @@ describe("pearl normalization", () => {
       "prl1ptest",
       {
         data: {
-          worker_count: 4,
-          reported_gpus: 8,
-          reported_hashrate: 2122105646203600,
+          summary: {
+            worker_count: 4,
+            reported_gpus: 8,
+            reported_hashrate: 2122105646203600,
+          },
         },
       },
       {

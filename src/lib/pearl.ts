@@ -77,6 +77,9 @@ export function normalizePearlSnapshot(
     typeof ledger === "object" && ledger !== null
       ? (ledger as { data?: Record<string, unknown> }).data
       : undefined;
+  const connectionSummary = connectionsData?.summary as
+    | Record<string, unknown>
+    | undefined;
 
   const pendingShares = minerData?.pending_shares as
     | Record<string, unknown>
@@ -86,9 +89,15 @@ export function normalizePearlSnapshot(
   return {
     sampled_at: sampledAt.toISOString(),
     wallet_address: walletAddress,
-    worker_count: numberValue(connectionsData?.worker_count),
-    reported_gpus: numberValue(connectionsData?.reported_gpus),
-    reported_hashrate: numberValue(connectionsData?.reported_hashrate),
+    worker_count: numberValue(
+      connectionSummary?.worker_count ?? connectionsData?.worker_count,
+    ),
+    reported_gpus: numberValue(
+      connectionSummary?.reported_gpus ?? connectionsData?.reported_gpus,
+    ),
+    reported_hashrate: numberValue(
+      connectionSummary?.reported_hashrate ?? connectionsData?.reported_hashrate,
+    ),
     pending_amount:
       stringValue(pendingShares?.pending_estimate_amount_coin) !== "0"
         ? stringValue(pendingShares?.pending_estimate_amount_coin)
