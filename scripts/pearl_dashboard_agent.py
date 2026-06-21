@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 import subprocess
 import sys
 import time
@@ -142,7 +143,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--machine", required=True)
     parser.add_argument("--worker", required=True)
     parser.add_argument("--dashboard-url", required=True)
-    parser.add_argument("--token", required=True)
+    parser.add_argument("--token", default=os.environ.get("TITAN_AGENT_TOKEN"))
     parser.add_argument("--interval", type=int, default=60)
     parser.add_argument("--once", action="store_true")
     return parser.parse_args()
@@ -150,6 +151,10 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    if not args.token:
+      print("missing --token or TITAN_AGENT_TOKEN", file=sys.stderr)
+      return 2
+
     while True:
         try:
             report = collect_report(args.machine, args.worker)

@@ -65,6 +65,16 @@ python3 pearl_dashboard_agent.py \
   --token "$TITAN_AGENT_TOKEN"
 ```
 
+Or export the token first so it is not visible in process arguments:
+
+```bash
+export TITAN_AGENT_TOKEN='replace-with-token-from-vercel'
+python3 pearl_dashboard_agent.py \
+  --machine titan094 \
+  --worker titan094-2x4090 \
+  --dashboard-url https://your-app.vercel.app
+```
+
 Single test report:
 
 ```bash
