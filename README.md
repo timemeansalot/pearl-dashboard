@@ -26,18 +26,16 @@ PEARL_ADDRESS
 ALLOWED_MACHINES
 ```
 
-Recommended:
-
-```text
-CRON_SECRET
-```
-
 Optional if Vercel cannot reach Pearl Fortune directly:
 
 ```text
 AWS_PROXY_URL
 AWS_PROXY_TOKEN
 ```
+
+Vercel Hobby accounts only allow daily Cron Jobs, so `vercel.json` refreshes
+Pearl Fortune account data once per day. Titan machine GPU data is pushed by
+the Titan reporter every 60 seconds and does not depend on Vercel Cron.
 
 If Pearl Fortune returns 403 from Vercel or your local network, run
 `scripts/aws_pearl_proxy.py` on `aws_verifier` or another overseas host:
