@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { DashboardStatus, GpuMetric, MachineSnapshot } from "@/lib/types";
 
+const SOLD_USDT_WALLET = "0xCC7dCD49fC03D52fCdA878dadd1C77588530689C";
+
 function formatMetric(value: number | null, suffix = "") {
   if (value === null || Number.isNaN(value)) {
     return "--";
@@ -68,19 +70,19 @@ function durationSince(iso: string | null) {
 
 function statusClasses(status: MachineSnapshot["status"]) {
   if (status === "online") {
-    return "border-emerald-500/30 bg-emerald-500/10 text-emerald-300";
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
   }
-  return "border-amber-500/30 bg-amber-500/10 text-amber-200";
+  return "border-amber-200 bg-amber-50 text-amber-700";
 }
 
 function tempClasses(temp: number) {
   if (temp >= 95) {
-    return "text-red-300";
+    return "text-red-600";
   }
   if (temp >= 85) {
-    return "text-amber-200";
+    return "text-amber-700";
   }
-  return "text-emerald-200";
+  return "text-emerald-700";
 }
 
 function SummaryCard({
@@ -93,10 +95,10 @@ function SummaryCard({
   subvalue?: string;
 }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
-      <div className="text-xs uppercase tracking-wide text-slate-400">{label}</div>
-      <div className="mt-2 text-2xl font-semibold text-white">{value}</div>
-      {subvalue ? <div className="mt-1 text-sm text-slate-400">{subvalue}</div> : null}
+    <div className="rounded-xl border border-stone-200 bg-[#f1eee8] p-5">
+      <div className="text-sm text-stone-500">{label}</div>
+      <div className="mt-3 text-3xl font-semibold text-neutral-950">{value}</div>
+      {subvalue ? <div className="mt-2 text-sm text-stone-500">{subvalue}</div> : null}
     </div>
   );
 }
@@ -108,36 +110,36 @@ function GpuRow({ gpu }: { gpu: GpuMetric }) {
       : 0;
 
   return (
-    <div className="grid grid-cols-2 gap-3 border-t border-white/10 py-3 text-sm md:grid-cols-6">
+    <div className="grid grid-cols-2 gap-3 border-t border-stone-200 py-3 text-sm md:grid-cols-6">
       <div>
-        <div className="font-mono text-slate-300">GPU{gpu.index}</div>
-        <div className="truncate text-xs text-slate-500">{gpu.name}</div>
+        <div className="font-mono text-neutral-900">GPU{gpu.index}</div>
+        <div className="truncate text-xs text-stone-500">{gpu.name}</div>
       </div>
       <div>
         <div className={`font-mono text-lg font-semibold ${tempClasses(gpu.temperature_c)}`}>
           {gpu.temperature_c}C
         </div>
-        <div className="text-xs text-slate-500">temperature</div>
+        <div className="text-xs text-stone-500">temperature</div>
       </div>
       <div>
-        <div className="font-mono text-lg font-semibold text-sky-200">
+        <div className="font-mono text-lg font-semibold text-emerald-700">
           {gpu.utilization_pct}%
         </div>
-        <div className="text-xs text-slate-500">utilization</div>
+        <div className="text-xs text-stone-500">utilization</div>
       </div>
       <div>
-        <div className="font-mono text-lg font-semibold text-slate-100">
+        <div className="font-mono text-lg font-semibold text-neutral-900">
           {Math.round(gpu.power_w)}W
         </div>
-        <div className="text-xs text-slate-500">power</div>
+        <div className="text-xs text-stone-500">power</div>
       </div>
       <div className="md:col-span-2">
-        <div className="font-mono text-lg font-semibold text-slate-100">
+        <div className="font-mono text-lg font-semibold text-neutral-900">
           {Math.round(gpu.memory_used_mib).toLocaleString()} MiB
         </div>
-        <div className="mt-1 h-1.5 rounded-full bg-slate-800">
+        <div className="mt-2 h-2 rounded-full bg-stone-200">
           <div
-            className="h-1.5 rounded-full bg-cyan-400"
+            className="h-2 rounded-full bg-emerald-600"
             style={{ width: `${Math.min(100, memoryPct)}%` }}
           />
         </div>
@@ -160,11 +162,11 @@ function MachineBlock({ machine }: { machine: MachineSnapshot }) {
       : null;
 
   return (
-    <section className="rounded-lg border border-white/10 bg-slate-950 p-5">
+    <section className="rounded-xl border border-stone-200 bg-white p-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <h2 className="text-xl font-semibold text-white">{machine.machine_name}</h2>
+            <h2 className="text-xl font-semibold text-neutral-950">{machine.machine_name}</h2>
             <span
               className={`rounded-full border px-2.5 py-1 text-xs font-medium ${statusClasses(
                 machine.status,
@@ -173,59 +175,59 @@ function MachineBlock({ machine }: { machine: MachineSnapshot }) {
               {machine.status}
             </span>
           </div>
-          <div className="mt-2 font-mono text-sm text-slate-400">{machine.worker_name}</div>
+          <div className="mt-2 font-mono text-sm text-stone-500">{machine.worker_name}</div>
         </div>
         <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-5">
           <div>
-            <div className="font-mono text-lg text-white">{machine.gpus.length}</div>
-            <div className="text-slate-500">GPUs</div>
+            <div className="font-mono text-lg text-neutral-950">{machine.gpus.length}</div>
+            <div className="text-stone-500">GPUs</div>
           </div>
           <div>
-            <div className={`font-mono text-lg ${maxTemp ? tempClasses(maxTemp) : "text-white"}`}>
+            <div className={`font-mono text-lg ${maxTemp ? tempClasses(maxTemp) : "text-neutral-950"}`}>
               {formatMetric(maxTemp, "C")}
             </div>
-            <div className="text-slate-500">max temp</div>
+            <div className="text-stone-500">max temp</div>
           </div>
           <div>
-            <div className="font-mono text-lg text-white">{formatMetric(avgUtil, "%")}</div>
-            <div className="text-slate-500">avg util</div>
+            <div className="font-mono text-lg text-neutral-950">{formatMetric(avgUtil, "%")}</div>
+            <div className="text-stone-500">avg util</div>
           </div>
           <div>
-            <div className="font-mono text-lg text-white">{relativeTime(machine.last_seen_at)}</div>
-            <div className="text-slate-500">last seen</div>
+            <div className="font-mono text-lg text-neutral-950">{relativeTime(machine.last_seen_at)}</div>
+            <div className="text-stone-500">last seen</div>
           </div>
           <div>
-            <div className="font-mono text-lg text-white">{durationSince(machine.work_started_at)}</div>
-            <div className="text-slate-500">uptime</div>
+            <div className="font-mono text-lg text-neutral-950">{durationSince(machine.work_started_at)}</div>
+            <div className="text-stone-500">uptime</div>
           </div>
         </div>
       </div>
       <div className="mt-5 grid grid-cols-2 gap-3 text-sm md:grid-cols-5">
-        <div className="rounded-md bg-white/[0.03] p-3">
-          <div className="text-slate-500">miner</div>
-          <div className="mt-1 text-slate-100">
+        <div className="rounded-lg bg-stone-50 p-3">
+          <div className="text-stone-500">miner</div>
+          <div className="mt-1 text-neutral-900">
             {machine.miner_running ? "running" : "stopped"}
           </div>
         </div>
-        <div className="rounded-md bg-white/[0.03] p-3">
-          <div className="text-slate-500">tunnel</div>
-          <div className="mt-1 text-slate-100">
+        <div className="rounded-lg bg-stone-50 p-3">
+          <div className="text-stone-500">tunnel</div>
+          <div className="mt-1 text-neutral-900">
             {machine.tunnel_running ? "running" : "stopped"}
           </div>
         </div>
-        <div className="rounded-md bg-white/[0.03] p-3">
-          <div className="text-slate-500">gpu mode</div>
-          <div className="mt-1 font-mono text-slate-100">{machine.gpu_mode ?? "--"}</div>
+        <div className="rounded-lg bg-stone-50 p-3">
+          <div className="text-stone-500">gpu mode</div>
+          <div className="mt-1 font-mono text-neutral-900">{machine.gpu_mode ?? "--"}</div>
         </div>
-        <div className="rounded-md bg-white/[0.03] p-3">
-          <div className="text-slate-500">reported</div>
-          <div className="mt-1 font-mono text-slate-100">
+        <div className="rounded-lg bg-stone-50 p-3">
+          <div className="text-stone-500">reported</div>
+          <div className="mt-1 font-mono text-neutral-900">
             {new Date(machine.last_seen_at).toLocaleString()}
           </div>
         </div>
-        <div className="rounded-md bg-white/[0.03] p-3">
-          <div className="text-slate-500">started</div>
-          <div className="mt-1 font-mono text-slate-100">
+        <div className="rounded-lg bg-stone-50 p-3">
+          <div className="text-stone-500">started</div>
+          <div className="mt-1 font-mono text-neutral-900">
             {machine.work_started_at
               ? new Date(machine.work_started_at).toLocaleString()
               : "--"}
@@ -296,18 +298,23 @@ export function DashboardClient({
   );
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <header className="flex flex-col gap-4 border-b border-white/10 pb-6 md:flex-row md:items-end md:justify-between">
+    <main className="min-h-screen bg-[#f7f6f3] text-neutral-900">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <header className="flex flex-col gap-4 pb-6 md:flex-row md:items-start md:justify-between">
           <div>
-            <h1 className="text-3xl font-semibold text-white">Pearl Mining Dashboard</h1>
-            <div className="mt-2 font-mono text-sm text-slate-400">
+            <h1 className="text-3xl font-semibold text-neutral-950">Pearl Mining Dashboard</h1>
+            <div className="mt-2 font-mono text-sm text-stone-500">
               {status.pearl?.wallet_address ?? "wallet not configured"}
             </div>
           </div>
-          <div className="text-sm text-slate-400">
-            updated {new Date(status.generated_at).toLocaleString()}
-            {error ? <span className="ml-3 text-amber-300">refresh: {error}</span> : null}
+          <div className="flex flex-col items-start gap-2 md:items-end">
+            <div className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700">
+              updated {new Date(status.generated_at).toLocaleString()}
+            </div>
+            <div className="max-w-full break-all rounded-full bg-blue-50 px-3 py-1 text-left font-mono text-xs text-blue-700 md:text-right">
+              Sold USDT EVM addr · {SOLD_USDT_WALLET}
+            </div>
+            {error ? <div className="text-sm text-amber-700">refresh: {error}</div> : null}
           </div>
         </header>
 
@@ -339,11 +346,11 @@ export function DashboardClient({
           />
         </section>
 
-        <section className="mt-6 rounded-lg border border-white/10 bg-white/[0.04] p-5">
-          <div className="mb-5 flex flex-col gap-3 border-b border-white/10 pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <section className="mt-6 rounded-xl border border-emerald-500 bg-white p-6">
+          <div className="mb-5 flex flex-col gap-3 border-b border-stone-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="text-sm font-medium text-slate-200">Pearl Fortune account</div>
-              <div className="mt-1 text-xs text-slate-500">
+              <div className="text-sm font-medium text-neutral-900">Pearl Fortune account</div>
+              <div className="mt-1 text-xs text-stone-500">
                 Manual refresh updates pool workers, hashrate, pending, mined PRL, wallet PRL, and sold USDT.
               </div>
             </div>
@@ -351,45 +358,45 @@ export function DashboardClient({
               type="button"
               onClick={refreshPearl}
               disabled={isRefreshingPearl}
-              className="inline-flex h-9 items-center justify-center rounded-md border border-cyan-400/30 bg-cyan-400/10 px-3 text-sm font-medium text-cyan-100 transition hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-9 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isRefreshingPearl ? "Refreshing..." : "Refresh Pearl"}
             </button>
           </div>
           <div className="grid gap-4 md:grid-cols-6">
             <div>
-              <div className="text-xs uppercase tracking-wide text-slate-500">workers</div>
-              <div className="mt-1 font-mono text-2xl text-white">
+              <div className="text-xs uppercase tracking-wide text-stone-500">workers</div>
+              <div className="mt-1 font-mono text-2xl text-neutral-950">
                 {status.pearl?.worker_count ?? 0}
               </div>
             </div>
             <div>
-              <div className="text-xs uppercase tracking-wide text-slate-500">hashrate</div>
-              <div className="mt-1 font-mono text-2xl text-white">
+              <div className="text-xs uppercase tracking-wide text-stone-500">hashrate</div>
+              <div className="mt-1 font-mono text-2xl text-neutral-950">
                 {formatHashrate(status.pearl?.reported_hashrate ?? 0)}
               </div>
             </div>
             <div>
-              <div className="text-xs uppercase tracking-wide text-slate-500">mined PRL</div>
-              <div className="mt-1 font-mono text-2xl text-white">
+              <div className="text-xs uppercase tracking-wide text-stone-500">mined PRL</div>
+              <div className="mt-1 font-mono text-2xl text-neutral-950">
                 {status.pearl?.payout_amount ?? "0"}
               </div>
             </div>
             <div>
-              <div className="text-xs uppercase tracking-wide text-slate-500">wallet PRL</div>
-              <div className="mt-1 font-mono text-2xl text-white">
+              <div className="text-xs uppercase tracking-wide text-stone-500">wallet PRL</div>
+              <div className="mt-1 font-mono text-2xl text-neutral-950">
                 {status.pearl?.balance_amount ?? "0"}
               </div>
             </div>
             <div>
-              <div className="text-xs uppercase tracking-wide text-slate-500">sold USDT</div>
-              <div className="mt-1 font-mono text-2xl text-white">
+              <div className="text-xs uppercase tracking-wide text-stone-500">sold USDT</div>
+              <div className="mt-1 font-mono text-2xl text-emerald-700">
                 {status.pearl?.usdt_balance ?? "--"}
               </div>
             </div>
             <div>
-              <div className="text-xs uppercase tracking-wide text-slate-500">pool refresh</div>
-              <div className="mt-1 font-mono text-sm text-white">
+              <div className="text-xs uppercase tracking-wide text-stone-500">pool refresh</div>
+              <div className="mt-1 font-mono text-sm text-neutral-950">
                 {status.pearl ? relativeTime(status.pearl.sampled_at) : "--"}
               </div>
             </div>
@@ -402,7 +409,7 @@ export function DashboardClient({
               <MachineBlock key={machine.machine_name} machine={machine} />
             ))
           ) : (
-            <section className="rounded-lg border border-dashed border-white/15 p-8 text-center text-slate-400">
+            <section className="rounded-xl border border-dashed border-stone-300 p-8 text-center text-stone-500">
               No Titan reports received yet.
             </section>
           )}
