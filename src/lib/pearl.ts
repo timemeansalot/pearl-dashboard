@@ -1,6 +1,7 @@
 import type { PearlAccountSnapshot } from "./types";
 
 const PEARL_API = "https://pearlfortune.org/api/v1";
+const PRLSCAN_API = "https://api.prlscan.com/v1";
 const DEFAULT_ADDRESS =
   "prl1ptd7756s8w54sne2j06nfkg5y2gxf3n97l9scp52mzgz0fkwgp2jsr222m5";
 const DEFAULT_BSC_USDT_WALLET = "0xCC7dCD49fC03D52fCdA878dadd1C77588530689C";
@@ -122,6 +123,30 @@ async function fetchBscUsdtBalance(): Promise<string | null> {
   return null;
 }
 
+async function fetchPrlWalletBalance(walletAddress: string): Promise<string | null> {
+  const apiUrl = process.env.PRLSCAN_API_URL ?? PRLSCAN_API;
+  try {
+    const response = await fetch(
+      `${apiUrl.replace(/\/$/, "")}/addresses/${encodeURIComponent(walletAddress)}`,
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 PearlDashboard/1.0",
+        },
+        cache: "no-store",
+      },
+    );
+    if (!response.ok) {
+      return null;
+    }
+    const payload = (await response.json()) as { balance_grains?: number | string };
+    return payload.balance_grains === undefined
+      ? null
+      : coinFromAtomic(payload.balance_grains);
+  } catch {
+    return null;
+  }
+}
+
 export function normalizePearlSnapshot(
   walletAddress: string,
   connections: unknown,
@@ -129,6 +154,7 @@ export function normalizePearlSnapshot(
   ledger: unknown,
   sampledAt = new Date(),
   usdtBalance: string | null = null,
+  walletBalance: string | null = null,
 ): PearlAccountSnapshot {
   const connectionsData =
     typeof connections === "object" && connections !== null
@@ -178,15 +204,16 @@ export function normalizePearlSnapshot(
           ? coinFromAtomic(credits?.sum_amount_atomic)
           : "0",
     payout_amount: stringValue(ledgerData?.sum_payout_amount_coin),
-    balance_amount: coinFromAtomic(
-      balance?.balance_atomic ?? balances[0]?.balance_atomic,
-    ),
+    balance_amount:
+      walletBalance ??
+      coinFromAtomic(balance?.balance_atomic ?? balances[0]?.balance_atomic),
     usdt_balance: usdtBalance,
     raw_payload: {
       connections,
       miner,
       ledger,
       bsc_usdt_balance: usdtBalance,
+      prl_wallet_balance: walletBalance,
     },
   };
 }
@@ -200,7 +227,10 @@ export async function fetchPearlAccountSnapshot(
     fetchPearlJson(`/miners/${encoded}`),
     fetchPearlJson(`/miners/${encoded}/ledger?page=1&page_size=10&entry_type=all`),
   ]);
-  const usdtBalance = await fetchBscUsdtBalance();
+  const [usdtBalance, walletBalance] = await Promise.all([
+    fetchBscUsdtBalance(),
+    fetchPrlWalletBalance(walletAddress),
+  ]);
 
   return normalizePearlSnapshot(
     walletAddress,
@@ -209,5 +239,6 @@ export async function fetchPearlAccountSnapshot(
     ledger,
     new Date(),
     usdtBalance,
+    walletBalance,
   );
 }
