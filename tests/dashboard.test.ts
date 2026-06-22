@@ -8,6 +8,7 @@ function machine(lastSeenAt: string): MachineSnapshot {
     worker_name: "titan093-2x4090",
     status: "online",
     last_seen_at: lastSeenAt,
+    work_started_at: null,
     miner_running: true,
     tunnel_running: true,
     gpu_mode: "all",
@@ -63,5 +64,39 @@ describe("dashboard status", () => {
     expect(status.summary.stale_machines).toBe(1);
     expect(status.summary.total_active_gpus).toBe(1);
     expect(status.summary.average_temperature_c).toBe(66);
+  });
+
+  it("maps Pearl worker connected time to machine uptime start", () => {
+    const now = new Date("2026-06-21T10:05:00.000Z");
+    const status = buildDashboardStatus(
+      [machine("2026-06-21T10:04:00.000Z")],
+      {
+        sampled_at: now.toISOString(),
+        wallet_address: "prl1ptest",
+        worker_count: 1,
+        reported_gpus: 2,
+        reported_hashrate: 1,
+        pending_amount: "0",
+        credited_amount: "0",
+        payout_amount: "0",
+        balance_amount: "0",
+        usdt_balance: null,
+        raw_payload: {
+          connections: {
+            data: {
+              workers: [
+                {
+                  worker: "titan093-2x4090",
+                  connected_at: "2026-06-21T08:00:00.000Z",
+                },
+              ],
+            },
+          },
+        },
+      },
+      now,
+    );
+
+    expect(status.machines[0].work_started_at).toBe("2026-06-21T08:00:00.000Z");
   });
 });

@@ -41,6 +41,31 @@ function relativeTime(iso: string) {
   return `${Math.round(diff / 3_600_000)}h`;
 }
 
+function durationSince(iso: string | null) {
+  if (!iso) {
+    return "--";
+  }
+  const diff = Date.now() - new Date(iso).getTime();
+  if (!Number.isFinite(diff) || diff < 0) {
+    return "--";
+  }
+
+  const minutes = Math.floor(diff / 60_000);
+  if (minutes < 60) {
+    return `${minutes}m`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  if (hours < 24) {
+    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+  }
+
+  const days = Math.floor(hours / 24);
+  const remainingHours = hours % 24;
+  return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
+}
+
 function statusClasses(status: MachineSnapshot["status"]) {
   if (status === "online") {
     return "border-emerald-500/30 bg-emerald-500/10 text-emerald-300";
@@ -150,7 +175,7 @@ function MachineBlock({ machine }: { machine: MachineSnapshot }) {
           </div>
           <div className="mt-2 font-mono text-sm text-slate-400">{machine.worker_name}</div>
         </div>
-        <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-5">
           <div>
             <div className="font-mono text-lg text-white">{machine.gpus.length}</div>
             <div className="text-slate-500">GPUs</div>
@@ -169,9 +194,13 @@ function MachineBlock({ machine }: { machine: MachineSnapshot }) {
             <div className="font-mono text-lg text-white">{relativeTime(machine.last_seen_at)}</div>
             <div className="text-slate-500">last seen</div>
           </div>
+          <div>
+            <div className="font-mono text-lg text-white">{durationSince(machine.work_started_at)}</div>
+            <div className="text-slate-500">uptime</div>
+          </div>
         </div>
       </div>
-      <div className="mt-5 grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
+      <div className="mt-5 grid grid-cols-2 gap-3 text-sm md:grid-cols-5">
         <div className="rounded-md bg-white/[0.03] p-3">
           <div className="text-slate-500">miner</div>
           <div className="mt-1 text-slate-100">
@@ -192,6 +221,14 @@ function MachineBlock({ machine }: { machine: MachineSnapshot }) {
           <div className="text-slate-500">reported</div>
           <div className="mt-1 font-mono text-slate-100">
             {new Date(machine.last_seen_at).toLocaleString()}
+          </div>
+        </div>
+        <div className="rounded-md bg-white/[0.03] p-3">
+          <div className="text-slate-500">started</div>
+          <div className="mt-1 font-mono text-slate-100">
+            {machine.work_started_at
+              ? new Date(machine.work_started_at).toLocaleString()
+              : "--"}
           </div>
         </div>
       </div>
@@ -307,7 +344,7 @@ export function DashboardClient({
             <div>
               <div className="text-sm font-medium text-slate-200">Pearl Fortune account</div>
               <div className="mt-1 text-xs text-slate-500">
-                Manual refresh updates pool workers, hashrate, pending, credited, and payout.
+                Manual refresh updates pool workers, hashrate, pending, mined PRL, wallet PRL, and sold USDT.
               </div>
             </div>
             <button
@@ -333,19 +370,19 @@ export function DashboardClient({
               </div>
             </div>
             <div>
-              <div className="text-xs uppercase tracking-wide text-slate-500">total PRL</div>
+              <div className="text-xs uppercase tracking-wide text-slate-500">mined PRL</div>
               <div className="mt-1 font-mono text-2xl text-white">
                 {status.pearl?.payout_amount ?? "0"}
               </div>
             </div>
             <div>
-              <div className="text-xs uppercase tracking-wide text-slate-500">balance</div>
+              <div className="text-xs uppercase tracking-wide text-slate-500">wallet PRL</div>
               <div className="mt-1 font-mono text-2xl text-white">
                 {status.pearl?.balance_amount ?? "0"}
               </div>
             </div>
             <div>
-              <div className="text-xs uppercase tracking-wide text-slate-500">USDT</div>
+              <div className="text-xs uppercase tracking-wide text-slate-500">sold USDT</div>
               <div className="mt-1 font-mono text-2xl text-white">
                 {status.pearl?.usdt_balance ?? "--"}
               </div>

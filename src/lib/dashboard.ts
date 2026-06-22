@@ -28,14 +28,53 @@ function roundNullable(value: number | null): number | null {
   return value === null ? null : Math.round(value * 10) / 10;
 }
 
+function pearlWorkerStartTimes(
+  pearl: PearlAccountSnapshot | null,
+): Map<string, string> {
+  const raw = pearl?.raw_payload;
+  if (typeof raw !== "object" || raw === null) {
+    return new Map();
+  }
+
+  const connections = (raw as { connections?: unknown }).connections;
+  if (typeof connections !== "object" || connections === null) {
+    return new Map();
+  }
+
+  const data = (connections as { data?: unknown }).data;
+  if (typeof data !== "object" || data === null) {
+    return new Map();
+  }
+
+  const workers = (data as { workers?: unknown }).workers;
+  if (!Array.isArray(workers)) {
+    return new Map();
+  }
+
+  const startedAtByWorker = new Map<string, string>();
+  for (const worker of workers) {
+    if (typeof worker !== "object" || worker === null) {
+      continue;
+    }
+    const workerName = (worker as { worker?: unknown }).worker;
+    const connectedAt = (worker as { connected_at?: unknown }).connected_at;
+    if (typeof workerName === "string" && typeof connectedAt === "string") {
+      startedAtByWorker.set(workerName, connectedAt);
+    }
+  }
+  return startedAtByWorker;
+}
+
 export function buildDashboardStatus(
   machines: MachineSnapshot[],
   pearl: PearlAccountSnapshot | null,
   now = new Date(),
 ): DashboardStatus {
+  const startedAtByWorker = pearlWorkerStartTimes(pearl);
   const normalizedMachines = machines.map((machine) => ({
     ...machine,
     status: machineStatus(machine.last_seen_at, now),
+    work_started_at: startedAtByWorker.get(machine.worker_name) ?? null,
   }));
 
   const onlineMachines = normalizedMachines.filter(

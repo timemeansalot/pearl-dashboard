@@ -28,6 +28,7 @@ export type MachineSnapshot = {
   worker_name: string;
   status: "online" | "stale" | "offline";
   last_seen_at: string;
+  work_started_at: string | null;
   miner_running: boolean;
   tunnel_running: boolean;
   gpu_mode: string | null;
