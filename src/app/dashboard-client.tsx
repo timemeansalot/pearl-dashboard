@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { DashboardStatus, GpuMetric, MachineSnapshot } from "@/lib/types";
 
 function formatMetric(value: number | null, suffix = "") {
@@ -211,16 +211,36 @@ export function DashboardClient({
 }) {
   const [status, setStatus] = useState(initialStatus);
   const [error, setError] = useState<string | null>(null);
+  const [isRefreshingPearl, setIsRefreshingPearl] = useState(false);
+
+  const refreshStatus = useCallback(async () => {
+    const response = await fetch("/api/status", { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`status ${response.status}`);
+    }
+    setStatus(await response.json());
+    setError(null);
+  }, []);
+
+  const refreshPearl = async () => {
+    setIsRefreshingPearl(true);
+    try {
+      const response = await fetch("/api/cron/pearl", { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`pearl ${response.status}`);
+      }
+      await refreshStatus();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "pearl refresh failed");
+    } finally {
+      setIsRefreshingPearl(false);
+    }
+  };
 
   useEffect(() => {
     const refresh = async () => {
       try {
-        const response = await fetch("/api/status", { cache: "no-store" });
-        if (!response.ok) {
-          throw new Error(`status ${response.status}`);
-        }
-        setStatus(await response.json());
-        setError(null);
+        await refreshStatus();
       } catch (err) {
         setError(err instanceof Error ? err.message : "refresh failed");
       }
@@ -228,7 +248,7 @@ export function DashboardClient({
 
     const interval = window.setInterval(refresh, 30_000);
     return () => window.clearInterval(interval);
-  }, []);
+  }, [refreshStatus]);
 
   const sortedMachines = useMemo(
     () =>
@@ -283,6 +303,22 @@ export function DashboardClient({
         </section>
 
         <section className="mt-6 rounded-lg border border-white/10 bg-white/[0.04] p-5">
+          <div className="mb-5 flex flex-col gap-3 border-b border-white/10 pb-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="text-sm font-medium text-slate-200">Pearl Fortune account</div>
+              <div className="mt-1 text-xs text-slate-500">
+                Manual refresh updates pool workers, hashrate, pending, credited, and payout.
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={refreshPearl}
+              disabled={isRefreshingPearl}
+              className="inline-flex h-9 items-center justify-center rounded-md border border-cyan-400/30 bg-cyan-400/10 px-3 text-sm font-medium text-cyan-100 transition hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isRefreshingPearl ? "Refreshing..." : "Refresh Pearl"}
+            </button>
+          </div>
           <div className="grid gap-4 md:grid-cols-5">
             <div>
               <div className="text-xs uppercase tracking-wide text-slate-500">workers</div>
