@@ -16,6 +16,9 @@ describe("pearl normalization", () => {
       },
       {
         data: {
+          balance: {
+            balance_atomic: 75000000,
+          },
           pending_shares: {
             pending_estimate_amount_atomic: 125000000,
           },
@@ -28,6 +31,7 @@ describe("pearl normalization", () => {
         },
       },
       new Date("2026-06-21T10:00:00.000Z"),
+      "12.34",
     );
 
     expect(snapshot.worker_count).toBe(4);
@@ -35,5 +39,7 @@ describe("pearl normalization", () => {
     expect(snapshot.pending_amount).toBe("1.25");
     expect(snapshot.credited_amount).toBe("2.5");
     expect(snapshot.payout_amount).toBe("1");
+    expect(snapshot.balance_amount).toBe("0.75");
+    expect(snapshot.usdt_balance).toBe("12.34");
   });
 });

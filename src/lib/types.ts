@@ -44,7 +44,8 @@ export type PearlAccountSnapshot = {
   pending_amount: string;
   credited_amount: string;
   payout_amount: string;
-  onchain_balance: string | null;
+  balance_amount: string;
+  usdt_balance: string | null;
   raw_payload: unknown;
 };
 

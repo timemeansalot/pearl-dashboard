@@ -95,9 +95,16 @@ class PostgresStore implements Store {
         pending_amount text not null,
         credited_amount text not null,
         payout_amount text not null,
-        onchain_balance text,
+        balance_amount text not null default '0',
+        usdt_balance text,
         raw_payload jsonb not null
       );
+
+      alter table pearl_account_snapshots
+        add column if not exists balance_amount text not null default '0';
+
+      alter table pearl_account_snapshots
+        add column if not exists usdt_balance text;
 
       create index if not exists pearl_account_snapshots_sampled_idx
         on pearl_account_snapshots(sampled_at desc);
@@ -177,9 +184,9 @@ class PostgresStore implements Store {
       insert into pearl_account_snapshots (
         sampled_at, wallet_address, worker_count, reported_gpus,
         reported_hashrate, pending_amount, credited_amount, payout_amount,
-        onchain_balance, raw_payload
+        balance_amount, usdt_balance, raw_payload
       )
-      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       `,
       [
         snapshot.sampled_at,
@@ -190,7 +197,8 @@ class PostgresStore implements Store {
         snapshot.pending_amount,
         snapshot.credited_amount,
         snapshot.payout_amount,
-        snapshot.onchain_balance,
+        snapshot.balance_amount,
+        snapshot.usdt_balance,
         JSON.stringify(snapshot.raw_payload),
       ],
     );
@@ -267,12 +275,13 @@ class PostgresStore implements Store {
       pending_amount: string;
       credited_amount: string;
       payout_amount: string;
-      onchain_balance: string | null;
+      balance_amount: string;
+      usdt_balance: string | null;
       raw_payload: unknown;
     }>(`
       select sampled_at, wallet_address, worker_count, reported_gpus,
         reported_hashrate, pending_amount, credited_amount, payout_amount,
-        onchain_balance, raw_payload
+        coalesce(balance_amount, '0') as balance_amount, usdt_balance, raw_payload
       from pearl_account_snapshots
       order by sampled_at desc
       limit 1

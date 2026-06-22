@@ -319,7 +319,7 @@ export function DashboardClient({
               {isRefreshingPearl ? "Refreshing..." : "Refresh Pearl"}
             </button>
           </div>
-          <div className="grid gap-4 md:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-6">
             <div>
               <div className="text-xs uppercase tracking-wide text-slate-500">workers</div>
               <div className="mt-1 font-mono text-2xl text-white">
@@ -333,15 +333,21 @@ export function DashboardClient({
               </div>
             </div>
             <div>
-              <div className="text-xs uppercase tracking-wide text-slate-500">payout</div>
+              <div className="text-xs uppercase tracking-wide text-slate-500">total PRL</div>
               <div className="mt-1 font-mono text-2xl text-white">
                 {status.pearl?.payout_amount ?? "0"}
               </div>
             </div>
             <div>
-              <div className="text-xs uppercase tracking-wide text-slate-500">on-chain</div>
+              <div className="text-xs uppercase tracking-wide text-slate-500">balance</div>
               <div className="mt-1 font-mono text-2xl text-white">
-                {status.pearl?.onchain_balance ?? "--"}
+                {status.pearl?.balance_amount ?? "0"}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-slate-500">USDT</div>
+              <div className="mt-1 font-mono text-2xl text-white">
+                {status.pearl?.usdt_balance ?? "--"}
               </div>
             </div>
             <div>

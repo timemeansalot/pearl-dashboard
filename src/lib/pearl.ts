@@ -3,6 +3,12 @@ import type { PearlAccountSnapshot } from "./types";
 const PEARL_API = "https://pearlfortune.org/api/v1";
 const DEFAULT_ADDRESS =
   "prl1ptd7756s8w54sne2j06nfkg5y2gxf3n97l9scp52mzgz0fkwgp2jsr222m5";
+const DEFAULT_BSC_USDT_WALLET = "0xCC7dCD49fC03D52fCdA878dadd1C77588530689C";
+const DEFAULT_BSC_USDT_CONTRACT = "0x55d398326f99059fF775485246999027B3197955";
+const DEFAULT_BSC_RPC_URLS = [
+  "https://bsc-rpc.publicnode.com",
+  "https://bsc-dataseed.bnbchain.org",
+];
 
 function numberValue(value: unknown): number {
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -33,6 +39,25 @@ function coinFromAtomic(value: unknown): string {
   return (atomic / 100_000_000).toFixed(8).replace(/\.?0+$/, "");
 }
 
+function formatUnits(value: bigint, decimals: number): string {
+  const divisor = BigInt(10) ** BigInt(decimals);
+  const whole = value / divisor;
+  const fraction = value % divisor;
+  if (fraction === BigInt(0)) {
+    return whole.toString();
+  }
+
+  const fractionText = fraction.toString().padStart(decimals, "0").replace(/0+$/, "");
+  return `${whole}.${fractionText}`;
+}
+
+function bscRpcUrls(): string[] {
+  const configured = process.env.BSC_RPC_URLS?.split(",")
+    .map((url) => url.trim())
+    .filter(Boolean);
+  return configured?.length ? configured : DEFAULT_BSC_RPC_URLS;
+}
+
 async function fetchPearlJson(path: string): Promise<unknown> {
   const url = `${PEARL_API}${path}`;
   const proxyUrl = process.env.AWS_PROXY_URL;
@@ -58,12 +83,52 @@ async function fetchPearlJson(path: string): Promise<unknown> {
   return response.json();
 }
 
+async function fetchBscUsdtBalance(): Promise<string | null> {
+  const wallet = process.env.BSC_USDT_WALLET ?? DEFAULT_BSC_USDT_WALLET;
+  const contract = process.env.BSC_USDT_CONTRACT ?? DEFAULT_BSC_USDT_CONTRACT;
+  const owner = wallet.toLowerCase().replace(/^0x/, "").padStart(64, "0");
+  const data = `0x70a08231${owner}`;
+
+  for (const rpcUrl of bscRpcUrls()) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8_000);
+    try {
+      const response = await fetch(rpcUrl, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "eth_call",
+          params: [{ to: contract, data }, "latest"],
+        }),
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        continue;
+      }
+      const payload = (await response.json()) as { result?: string };
+      if (payload.result?.startsWith("0x")) {
+        return formatUnits(BigInt(payload.result), 18);
+      }
+    } catch {
+      continue;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  return null;
+}
+
 export function normalizePearlSnapshot(
   walletAddress: string,
   connections: unknown,
   miner: unknown,
   ledger: unknown,
   sampledAt = new Date(),
+  usdtBalance: string | null = null,
 ): PearlAccountSnapshot {
   const connectionsData =
     typeof connections === "object" && connections !== null
@@ -85,6 +150,10 @@ export function normalizePearlSnapshot(
     | Record<string, unknown>
     | undefined;
   const credits = minerData?.credits as Record<string, unknown> | undefined;
+  const balance = minerData?.balance as Record<string, unknown> | undefined;
+  const balances = Array.isArray(minerData?.balances)
+    ? (minerData.balances as Record<string, unknown>[])
+    : [];
 
   return {
     sampled_at: sampledAt.toISOString(),
@@ -109,11 +178,15 @@ export function normalizePearlSnapshot(
           ? coinFromAtomic(credits?.sum_amount_atomic)
           : "0",
     payout_amount: stringValue(ledgerData?.sum_payout_amount_coin),
-    onchain_balance: null,
+    balance_amount: coinFromAtomic(
+      balance?.balance_atomic ?? balances[0]?.balance_atomic,
+    ),
+    usdt_balance: usdtBalance,
     raw_payload: {
       connections,
       miner,
       ledger,
+      bsc_usdt_balance: usdtBalance,
     },
   };
 }
@@ -127,6 +200,14 @@ export async function fetchPearlAccountSnapshot(
     fetchPearlJson(`/miners/${encoded}`),
     fetchPearlJson(`/miners/${encoded}/ledger?page=1&page_size=10&entry_type=all`),
   ]);
+  const usdtBalance = await fetchBscUsdtBalance();
 
-  return normalizePearlSnapshot(walletAddress, connections, miner, ledger);
+  return normalizePearlSnapshot(
+    walletAddress,
+    connections,
+    miner,
+    ledger,
+    new Date(),
+    usdtBalance,
+  );
 }
