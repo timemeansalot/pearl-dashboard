@@ -23,25 +23,20 @@ export const agentReportSchema = z.object({
   gpus: z.array(gpuMetricSchema).max(16),
 });
 
-const defaultMachines = [
-  "titan093",
-  "titan056",
-  "titan062",
-  "titan066",
-  "titan094",
-  "titan095",
-  "titan096",
-];
+const defaultMachines = Array.from({ length: 50 }, (_, index) => {
+  const machineNumber = String(index + 51).padStart(3, "0");
+  return `titan${machineNumber}`;
+});
 
 export function allowedMachines(): Set<string> {
   const value = process.env.ALLOWED_MACHINES;
-  const machines = value
+  const extraMachines = value
     ? value
         .split(",")
         .map((item) => item.trim())
         .filter(Boolean)
-    : defaultMachines;
-  return new Set(machines);
+    : [];
+  return new Set([...defaultMachines, ...extraMachines]);
 }
 
 export function isAllowedMachine(machine: string): boolean {

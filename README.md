@@ -23,12 +23,16 @@ Required:
 DATABASE_URL
 TITAN_AGENT_TOKEN
 PEARL_ADDRESS
-ALLOWED_MACHINES
 ```
 
-Optional if Vercel cannot reach Pearl Fortune directly:
+`titan051` through `titan100` are accepted by default. Set `ALLOWED_MACHINES`
+only when you need to allow extra non-default machine names; values are merged
+with the default Titan range.
+
+Optional:
 
 ```text
+ALLOWED_MACHINES
 AWS_PROXY_URL
 AWS_PROXY_TOKEN
 ```
