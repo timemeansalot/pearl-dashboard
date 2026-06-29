@@ -146,6 +146,26 @@ class PostgresStore implements Store {
         ],
       );
 
+      const reportedGpuIndexes = report.gpus.map((gpu) => gpu.index);
+      if (reportedGpuIndexes.length > 0) {
+        await client.query(
+          `
+          delete from gpu_samples
+          where machine_name = $1
+            and not (gpu_index = any($2::int[]))
+          `,
+          [report.machine, reportedGpuIndexes],
+        );
+      } else {
+        await client.query(
+          `
+          delete from gpu_samples
+          where machine_name = $1
+          `,
+          [report.machine],
+        );
+      }
+
       for (const gpu of report.gpus) {
         await client.query(
           `
