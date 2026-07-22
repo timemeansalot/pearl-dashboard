@@ -20,10 +20,14 @@ local UI testing but not persistent.
 Required:
 
 ```text
-DATABASE_URL
+PEARL_DASHBOARD_DATABASE_URL
 TITAN_AGENT_TOKEN
 PEARL_ADDRESS
 ```
+
+`PEARL_DASHBOARD_DATABASE_URL` is intentionally project-specific. The app does
+not read Vercel/Neon system `DATABASE_URL` variables so a storage integration
+cannot accidentally force the dashboard onto an exhausted database.
 
 `titan051` through `titan100` are accepted by default. Set `ALLOWED_MACHINES`
 only when you need to allow extra non-default machine names; values are merged

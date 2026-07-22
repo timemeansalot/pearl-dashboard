@@ -328,15 +328,19 @@ export class PostgresStore implements Store {
 function getPool(): Pool {
   if (!globalThis.__pearlDashboardPgPool) {
     globalThis.__pearlDashboardPgPool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: getDatabaseUrl(),
       max: 3,
     });
   }
   return globalThis.__pearlDashboardPgPool;
 }
 
+export function getDatabaseUrl(): string | undefined {
+  return process.env.PEARL_DASHBOARD_DATABASE_URL;
+}
+
 export function getStore(): Store {
-  if (process.env.DATABASE_URL) {
+  if (getDatabaseUrl()) {
     if (!globalThis.__pearlDashboardPgStore) {
       globalThis.__pearlDashboardPgStore = new PostgresStore(getPool());
     }
