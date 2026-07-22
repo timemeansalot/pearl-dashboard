@@ -97,6 +97,10 @@ stop miners.
 Machines are marked stale by the dashboard if no report is received for 10
 minutes.
 
+GPU metric history is retained for 7 days. Each accepted Titan agent report
+also deletes `gpu_samples` rows older than 7 days to limit Postgres growth and
+Neon compute/storage pressure.
+
 ## API
 
 `POST /api/agent/report`

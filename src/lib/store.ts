@@ -48,7 +48,7 @@ class MemoryStore implements Store {
   }
 }
 
-class PostgresStore implements Store {
+export class PostgresStore implements Store {
   private initialized = false;
 
   constructor(private readonly pool: Pool) {}
@@ -188,6 +188,11 @@ class PostgresStore implements Store {
           ],
         );
       }
+
+      await client.query(`
+        delete from gpu_samples
+        where sampled_at < now() - interval '7 days'
+      `);
 
       await client.query("commit");
     } catch (error) {
